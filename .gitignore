@@ -1,0 +1,23 @@
+# Editor junk
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Secret-like files
+# This is a backstop, not the primary defense — the real rule is "never commit
+# real secrets". The placeholder convention (REPLACE_ME_BEFORE_DEPLOY) is
+# described in docs/secrets.md.
+*.key
+*.pem
+*secret*.yaml
+*secrets*.yaml
+
+# Local kubeconfig
+kubeconfig
+*.kubeconfig
+
+# Helm artifacts
+charts/
+*.tgz
