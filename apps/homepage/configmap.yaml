@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: test-app-html
-  namespace: test-app
+  name: homepage-html
+  namespace: homepage
   labels:
-    app.kubernetes.io/name: test-app
+    app.kubernetes.io/name: homepage
     app.kubernetes.io/component: server
-    app.kubernetes.io/part-of: test-app
+    app.kubernetes.io/part-of: homepage
 data:
   index.html: |
     <!DOCTYPE html>

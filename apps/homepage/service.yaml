@@ -2,16 +2,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: test-app
-  namespace: test-app
+  name: homepage
+  namespace: homepage
   labels:
-    app.kubernetes.io/name: test-app
+    app.kubernetes.io/name: homepage
     app.kubernetes.io/component: server
-    app.kubernetes.io/part-of: test-app
+    app.kubernetes.io/part-of: homepage
 spec:
   type: ClusterIP
   selector:
-    app.kubernetes.io/name: test-app
+    app.kubernetes.io/name: homepage
   ports:
     - name: http
       port: 80

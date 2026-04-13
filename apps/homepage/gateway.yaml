@@ -1,0 +1,20 @@
+---
+# HTTPS Gateway for the homelab welcome page.
+# cert-manager provisions a Let's Encrypt certificate via DNS-01.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: homepage-gateway
+  namespace: homepage
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 8443
+      hostname: homelab.mcagr.com
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: homepage-tls
