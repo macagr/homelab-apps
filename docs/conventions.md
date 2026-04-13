@@ -115,3 +115,47 @@ StatefulSet template) that mounts a PersistentVolumeClaim.
 
 Nodes with SSDs should have this label applied via the Ansible homelab repo. Verify
 with `kubectl get nodes --show-labels` before deploying.
+
+---
+
+## App of Apps pattern
+
+Workloads are deployed via the Argo CD
+[App of Apps](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern)
+pattern. A single **root Application** (created by Ansible) watches the
+`bootstrap/` directory. Each file there is a child Argo CD Application
+pointing at a workload directory under `apps/`, `platform/`, or `demos/`.
+
+### Directory mapping
+
+| Directory | Contains | Managed by |
+|-----------|----------|------------|
+| `bootstrap/` | Child Argo CD `Application` manifests (one per workload) | Root Application |
+| `apps/<name>/` | Workload Kubernetes manifests | Child Application in `bootstrap/<name>.yaml` |
+| `platform/<name>/` | Platform service manifests | Child Application in `bootstrap/<name>.yaml` |
+| `demos/<name>/` | Demo/experiment manifests | Child Application in `bootstrap/<name>.yaml` |
+
+### Naming conventions
+
+- **File name:** `bootstrap/<workload>.yaml` (matches the workload directory name)
+- **Application name:** `metadata.name` matches the workload name (e.g. `miniflux`)
+- **Namespace:** `spec.destination.namespace` matches the workload name
+- All child Applications live in the `argocd` namespace (`metadata.namespace: argocd`)
+
+### Sync policy
+
+All Applications (root and children) use:
+
+```yaml
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+```
+
+- **prune:** Argo CD deletes resources removed from git
+- **selfHeal:** Argo CD reverts manual `kubectl` changes to match git
+
+Child Applications use `CreateNamespace=true` (the namespace is part of the
+workload). The root Application uses `CreateNamespace=false` (the `argocd`
+namespace already exists).

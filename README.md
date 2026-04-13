@@ -58,10 +58,21 @@ applying. See [docs/secrets.md](docs/secrets.md) for the full workflow.
 
 ## GitOps via Argo CD
 
-Argo CD is installed on the cluster but is **not yet wired up to this repository**.
-The directory structure is intentionally compatible with Argo CD's app-of-apps pattern
-so that pointing an Application at `apps/<workload>/` will work without restructuring.
-That wiring will be added in a follow-up.
+Argo CD watches this repository using the
+[App of Apps](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern)
+pattern:
+
+```
+Ansible (homelab repo)
+  └─ creates root Application → watches bootstrap/
+       └─ bootstrap/<name>.yaml (child Application) → watches apps/<name>/
+            └─ Kubernetes manifests auto-synced to the cluster
+```
+
+To deploy a new workload: create manifests in `apps/<name>/`, add a child
+Application in `bootstrap/<name>.yaml`, commit, and push. Argo CD detects
+the change and deploys automatically. See [docs/deployment.md](docs/deployment.md)
+for the full workflow.
 
 ## Docs
 

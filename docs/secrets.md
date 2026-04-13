@@ -76,10 +76,42 @@ values in files that live in this repo.
 
 ## Future: Sealed Secrets / External Secrets
 
-Neither [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) nor
+~~Neither [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) nor
 [External Secrets Operator](https://external-secrets.io/) is configured on the
-cluster yet. One of them will likely be added later to enable fully GitOps-driven
-secret management. When that happens, this document will be updated and the
-placeholder convention may be retired.
+cluster yet.~~
 
-Until then, the manual out-of-band approach above is the required workflow.
+### ExternalSecret resources (current approach)
+
+The cluster now has the [External Secrets Operator](https://external-secrets.io/)
+installed with a 1Password SDK provider. A `ClusterSecretStore` named `onepassword`
+is configured and ready, pointing at the `homelab` 1Password vault.
+
+Secrets should flow through `ExternalSecret` resources:
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: my-app-credentials
+  namespace: my-app
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword
+  target:
+    name: my-app-credentials
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: "My App/password"
+```
+
+`ExternalSecret` manifests are safe to commit publicly — they reference 1Password
+item names and field labels, never actual secret values. The real values are fetched
+at runtime by ESO from the 1Password vault.
+
+The `REPLACE_ME_BEFORE_DEPLOY` placeholder convention remains valid for workloads
+that don't yet have their secrets in 1Password, but the goal is to migrate all
+secrets to `ExternalSecret` resources over time.

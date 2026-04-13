@@ -1,0 +1,137 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-app-html
+  namespace: test-app
+  labels:
+    app.kubernetes.io/name: test-app
+    app.kubernetes.io/component: server
+    app.kubernetes.io/part-of: test-app
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>mcagr homelab</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          background: #0f172a;
+          color: #e2e8f0;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .container {
+          max-width: 640px;
+          padding: 2rem;
+          text-align: center;
+        }
+        h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          background: linear-gradient(135deg, #38bdf8, #818cf8);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+          font-size: 1.1rem;
+          color: #94a3b8;
+          margin-bottom: 2rem;
+        }
+        .nodes {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        .node {
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 0.75rem;
+          padding: 1rem;
+          text-align: left;
+        }
+        .node-name {
+          font-weight: 600;
+          color: #38bdf8;
+          margin-bottom: 0.25rem;
+        }
+        .node-detail {
+          font-size: 0.85rem;
+          color: #64748b;
+        }
+        .stack {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          justify-content: center;
+          margin-bottom: 2rem;
+        }
+        .badge {
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 9999px;
+          padding: 0.35rem 0.85rem;
+          font-size: 0.8rem;
+          color: #94a3b8;
+        }
+        footer {
+          font-size: 0.8rem;
+          color: #475569;
+        }
+        footer a {
+          color: #818cf8;
+          text-decoration: none;
+        }
+        footer a:hover { text-decoration: underline; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>mcagr homelab</h1>
+        <p class="subtitle">Raspberry Pi k3s cluster &mdash; deployed via GitOps</p>
+
+        <div class="nodes">
+          <div class="node">
+            <div class="node-name">pi-01</div>
+            <div class="node-detail">4 GB &middot; server &middot; SSD</div>
+          </div>
+          <div class="node">
+            <div class="node-name">pi-02</div>
+            <div class="node-detail">2 GB &middot; agent &middot; SSD</div>
+          </div>
+          <div class="node">
+            <div class="node-name">pi-03</div>
+            <div class="node-detail">4 GB &middot; agent &middot; microSD</div>
+          </div>
+          <div class="node">
+            <div class="node-name">node-4</div>
+            <div class="node-detail">8 GB &middot; agent &middot; Hetzner</div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <span class="badge">k3s</span>
+          <span class="badge">Cilium</span>
+          <span class="badge">Traefik</span>
+          <span class="badge">Argo CD</span>
+          <span class="badge">cert-manager</span>
+          <span class="badge">MetalLB</span>
+          <span class="badge">ExternalDNS</span>
+          <span class="badge">ESO + 1Password</span>
+          <span class="badge">Tailscale</span>
+        </div>
+
+        <footer>
+          Managed by <a href="https://argocd.mcagr.com">Argo CD</a>
+        </footer>
+      </div>
+    </body>
+    </html>

@@ -62,26 +62,84 @@ kubectl delete namespace <workload>
 
 ---
 
-## Future workflow — Argo CD GitOps
+## GitOps workflow — Argo CD App of Apps
 
-> **Status: not yet active.** Argo CD is installed on the cluster but is not
-> yet pointing at this repository.
+Argo CD watches this repository and automatically deploys workloads using the
+App of Apps pattern. No manual `kubectl apply` is needed for normal operations.
 
-When GitOps wiring is in place, the workflow will change to:
+### Adding a new workload
 
-1. Open a pull request with your manifest changes.
-2. Get it reviewed and merged to `main`.
-3. Argo CD detects the change and automatically syncs the affected Application.
-4. Monitor the sync status in the Argo CD UI or via `argocd app get <workload>`.
+1. **Create the workload directory** with Kubernetes manifests:
 
-No manual `kubectl apply` will be needed for normal operations. The manual workflow
-above will remain useful for emergency out-of-band intervention.
+   ```
+   apps/<name>/
+   ├── namespace.yaml
+   ├── deployment.yaml
+   ├── service.yaml
+   └── ...
+   ```
 
-### TODO — things to document once GitOps is live
+   Follow [conventions.md](conventions.md) for namespaces, labels, resource
+   limits, and secrets.
 
-- [ ] How to create an Argo CD Application pointing at `apps/<workload>/`
-- [ ] Sync policy (manual vs automatic, prune, self-heal settings)
-- [ ] How to force a manual sync from the CLI
-- [ ] Rollback procedure
-- [ ] What happens to secrets — likely requires Sealed Secrets or External Secrets
-      to be set up first (see [secrets.md](secrets.md))
+2. **Create the child Application** in `bootstrap/<name>.yaml`:
+
+   ```yaml
+   apiVersion: argoproj.io/v1alpha1
+   kind: Application
+   metadata:
+     name: <name>
+     namespace: argocd
+     finalizers:
+       - resources-finalizer.argocd.argoproj.io
+   spec:
+     project: default
+     source:
+       repoURL: https://github.com/macagr/homelab-apps.git
+       targetRevision: main
+       path: apps/<name>
+     destination:
+       server: https://kubernetes.default.svc
+       namespace: <name>
+     syncPolicy:
+       automated:
+         prune: true
+         selfHeal: true
+       syncOptions:
+         - CreateNamespace=true
+   ```
+
+3. **Commit and push** to `main`:
+
+   ```bash
+   git add apps/<name>/ bootstrap/<name>.yaml
+   git commit -m "deploy <name>"
+   git push
+   ```
+
+4. **Monitor** in the Argo CD UI at https://argocd.mcagr.com or via CLI:
+
+   ```bash
+   kubectl get application -n argocd <name>
+   ```
+
+### Removing a workload
+
+Delete `bootstrap/<name>.yaml`, commit, and push. Argo CD auto-prunes the
+child Application, which cascades to delete all managed resources including
+the namespace.
+
+### Forcing a manual sync
+
+```bash
+kubectl -n argocd patch application <name> \
+  --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
+```
+
+Or use the Argo CD UI: select the Application → Sync → Synchronize.
+
+### Emergency out-of-band changes
+
+The manual `kubectl apply` workflow from above still works for emergencies.
+Be aware that Argo CD's self-heal will revert manual changes within ~3 minutes
+unless you first disable auto-sync on the affected Application.

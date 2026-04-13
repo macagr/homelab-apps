@@ -1,0 +1,32 @@
+---
+# Child Application: test-app
+#
+# Homelab welcome page. A lightweight nginx container serving a static
+# landing page. Used to verify the App of Apps chain is working end to
+# end. Safe to keep or delete once verification is complete.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: test-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/macagr/homelab-apps.git
+    targetRevision: main
+    path: apps/test-app
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: test-app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

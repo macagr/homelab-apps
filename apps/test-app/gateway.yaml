@@ -1,0 +1,15 @@
+---
+# HTTP-only Gateway for the test-app welcome page.
+# No TLS, no hostname filter — serves on port 80 at the Traefik
+# LoadBalancer IP. Add a Certificate + hostname later to move to HTTPS.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: test-app-gateway
+  namespace: test-app
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
