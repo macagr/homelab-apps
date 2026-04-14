@@ -1,27 +1,4 @@
-communications:
-  default-group:
-    socketSlack:
-      enabled: true
-      channels:
-        default:
-          name: "kubebot"
-          bindings:
-            executors:
-              - kubectl-read-only
-              - argocd
-            sources:
-              - kubernetes-errors
-              - argocd-events
-      botToken:
-        valueFrom:
-          secretKeyRef:
-            name: botkube-slack-secret
-            key: SLACK_BOT_TOKEN
-      appToken:
-        valueFrom:
-          secretKeyRef:
-            name: botkube-slack-secret
-            key: SLACK_APP_TOKEN
+existingCommunicationsSecretName: "botkube-communications"
 
 sources:
   kubernetes-errors:
