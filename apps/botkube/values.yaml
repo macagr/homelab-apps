@@ -4,6 +4,18 @@ communications:
   default-group:
     socketSlack:
       enabled: true
+      channels:
+        default:
+          name: "kubebot"
+          bindings:
+            executors:
+              - kubectl-read-only
+              - argocd
+            sources:
+              - kubernetes-errors
+              - argocd-events
+      botToken: "REPLACED_BY_SECRET"
+      appToken: "REPLACED_BY_SECRET"
 
 sources:
   kubernetes-errors:

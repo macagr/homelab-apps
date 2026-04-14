@@ -16,7 +16,7 @@ spec:
     template:
       engineVersion: v2
       data:
-        communications_config.yaml: |
+        comm_config.yaml: |
           communications:
             default-group:
               socketSlack:
