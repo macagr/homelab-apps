@@ -6,17 +6,15 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: onepassword 
     kind: ClusterSecretStore
+    name: onepassword
   target:
     name: botkube-slack-secret
     creationPolicy: Owner
   data:
     - secretKey: SLACK_APP_TOKEN
       remoteRef:
-        key: kubebot_app_token         
-        property: password             
+        key: kubebot_app_token/password 
     - secretKey: SLACK_BOT_TOKEN
       remoteRef:
-        key: kubebot_user_oauth_token  
-        property: password
+        key: kubebot_user_oauth_token/password
