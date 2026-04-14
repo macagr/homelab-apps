@@ -94,6 +94,12 @@ executors:
                 - "history"
                 - "terminate-op"
 
+settings:
+  clusterName: homelab
+  log:
+    level: debug
+    formatter: json
+
 # Protect the Raspberry Pis!
 resources:
   requests:
