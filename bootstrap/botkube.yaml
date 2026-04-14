@@ -25,18 +25,6 @@ spec:
         # This is the magic line. It stops ArgoCD from trying to apply values.yaml as a raw manifest.
         exclude: 'values.yaml'
         
-  # The Helm chart uses `lookup` to read the communications secret when rendering
-  # botkube-runtime-config, but ArgoCD's `helm template` doesn't support `lookup`.
-  # This causes an empty `communications:` key in _runtime_state.yaml that
-  # overwrites the real Slack config from the ESO secret.
-  # Ignoring the data field prevents ArgoCD from resetting Botkube's runtime state.
-  ignoreDifferences:
-    - group: ""
-      kind: ConfigMap
-      name: botkube-runtime-config
-      namespace: botkube
-      jsonPointers:
-        - /data
   syncPolicy:
     automated:
       prune: true

@@ -94,6 +94,17 @@ executors:
                 - "history"
                 - "terminate-op"
 
+# Override config load order so comm_config.yaml (ESO secret) loads LAST.
+# The chart's persistent-config template uses `lookup` to render the runtime ConfigMap,
+# but ArgoCD's `helm template` doesn't support `lookup`, resulting in an empty
+# `communications:` key in _runtime_state.yaml that overwrites the real Slack config.
+# Putting comm_config.yaml last ensures it always wins.
+extraEnv:
+  - name: BOTKUBE_CONFIG_PATHS
+    value: "/config/global_config.yaml,/config/_runtime_state.yaml,/startup-config/_startup_state.yaml,/config/comm_config.yaml"
+  - name: LOG_LEVEL_SOURCE_BOTKUBE_KUBERNETES
+    value: debug
+
 settings:
   clusterName: homelab
   log:
