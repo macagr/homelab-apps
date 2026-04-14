@@ -1,5 +1,7 @@
 existingCommunicationsSecretName: "botkube-communications"
 
+communications: {}
+
 sources:
   kubernetes-errors:
     botkube/kubernetes:
