@@ -22,6 +22,7 @@ communications:
 sources:
   kubernetes-errors:
     botkube/kubernetes:
+      enabled: true
       context:
         rbac:
           group:
@@ -43,6 +44,7 @@ sources:
           - type: batch/v1/jobs
   argocd-events:
     botkube/kubernetes:
+      enabled: true
       context:
         rbac:
           group:
@@ -65,6 +67,7 @@ sources:
 executors:
   kubectl-read-only:
     botkube/kubectl:
+      enabled: true
       config:
         defaultNamespace: default
         interactiveBuilder:
@@ -73,6 +76,7 @@ executors:
             resources: ["pods", "deployments", "services", "nodes", "namespaces", "statefulsets", "daemonsets", "jobs", "configmaps", "events"]
   argocd:
     botkube/exec:
+      enabled: true
       config:
         commands:
           - name: "argocd"
