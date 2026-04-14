@@ -8,8 +8,10 @@ communications:
           bindings:
             executors:
               - kubectl-read-only
+              - argocd
             sources:
               - kubernetes-errors
+              - argocd-events
       token:
         valueFrom:
           secretKeyRef:
@@ -20,6 +22,77 @@ communications:
           secretKeyRef:
             name: botkube-slack-secret
             key: SLACK_APP_TOKEN
+
+sources:
+  kubernetes-errors:
+    botkube/kubernetes:
+      context:
+        rbac:
+          group:
+            type: Static
+            static:
+              values: ["botkube-plugins-default"]
+      config:
+        event:
+          types:
+            - create
+            - delete
+            - error
+        resources:
+          - type: v1/pods
+          - type: v1/services
+          - type: apps/v1/deployments
+          - type: apps/v1/statefulsets
+          - type: apps/v1/daemonsets
+          - type: batch/v1/jobs
+  argocd-events:
+    botkube/kubernetes:
+      context:
+        rbac:
+          group:
+            type: Static
+            static:
+              values: ["botkube-plugins-default"]
+      config:
+        event:
+          types:
+            - create
+            - update
+            - delete
+            - error
+        namespaces:
+          include: ["argocd"]
+        resources:
+          - type: argoproj.io/v1alpha1/applications
+          - type: argoproj.io/v1alpha1/appprojects
+
+executors:
+  kubectl-read-only:
+    botkube/kubectl:
+      config:
+        defaultNamespace: default
+        interactiveBuilder:
+          allowed:
+            verbs: ["get", "describe", "logs", "top"]
+            resources: ["pods", "deployments", "services", "nodes", "namespaces", "statefulsets", "daemonsets", "jobs", "configmaps", "events"]
+  argocd:
+    botkube/exec:
+      config:
+        commands:
+          - name: "argocd"
+            command: "argocd"
+            allowed:
+              subcommands:
+                - "app"
+                - "proj"
+              verbs:
+                - "list"
+                - "get"
+                - "sync"
+                - "diff"
+                - "rollback"
+                - "history"
+                - "terminate-op"
 
 # Protect the Raspberry Pis!
 resources:
