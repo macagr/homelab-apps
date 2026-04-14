@@ -14,9 +14,7 @@ spec:
   data:
     - secretKey: SLACK_APP_TOKEN
       remoteRef:
-        name: kubebot_app_token
-        key: credential 
+        key: "kubebot_app_token/credential"
     - secretKey: SLACK_BOT_TOKEN
       remoteRef:
-        name: kubebot_user_oauth_token
-        key: credential
+        key: "kubebot_user_oauth_token/credential"
