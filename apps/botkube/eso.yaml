@@ -1,0 +1,22 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: botkube-slack-credentials
+  namespace: botkube
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword 
+    kind: ClusterSecretStore
+  target:
+    name: botkube-slack-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: SLACK_APP_TOKEN
+      remoteRef:
+        key: kubebot_app_token         
+        property: password             
+    - secretKey: SLACK_BOT_TOKEN
+      remoteRef:
+        key: kubebot_user_oauth_token  
+        property: password
