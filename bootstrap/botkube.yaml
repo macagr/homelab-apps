@@ -17,7 +17,7 @@ spec:
         valueFiles:
           - $values/apps/botkube/values.yaml 
           
-    - repoURL: 'https://github.com/macagr/homelab-app.git' # UPDATE THIS!
+    - repoURL: 'https://github.com/macagr/homelab-apps.git' # UPDATE THIS!
       targetRevision: main
       ref: values
       path: apps/botkube
