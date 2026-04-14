@@ -24,6 +24,8 @@ spec:
                 channels:
                   default:
                     name: "kubebot"
+                    notification:
+                      disabled: false
                     bindings:
                       executors:
                         - kubectl-read-only

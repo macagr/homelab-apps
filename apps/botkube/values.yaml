@@ -7,6 +7,8 @@ communications:
       channels:
         default:
           name: "kubebot"
+          notification:
+            disabled: false
           bindings:
             executors:
               - kubectl-read-only
@@ -14,8 +16,8 @@ communications:
             sources:
               - kubernetes-errors
               - argocd-events
-      botToken: "REPLACED_BY_SECRET"
-      appToken: "REPLACED_BY_SECRET"
+      botToken: "placeholder"
+      appToken: "placeholder"
 
 sources:
   kubernetes-errors:
