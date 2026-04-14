@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: 'https://charts.botkube.io'
       chart: botkube
-      targetRevision: 1.9.0
+      targetRevision: 1.14.0
       helm:
         valueFiles:
           - $values/apps/botkube/values.yaml 
