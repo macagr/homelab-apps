@@ -1,6 +1,6 @@
 communications:
   default-group:
-    slack:
+    socketSlack:
       enabled: true
       channels:
         default:
@@ -12,7 +12,7 @@ communications:
             sources:
               - kubernetes-errors
               - argocd-events
-      token:
+      botToken:
         valueFrom:
           secretKeyRef:
             name: botkube-slack-secret
