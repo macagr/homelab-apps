@@ -1,6 +1,9 @@
 existingCommunicationsSecretName: "botkube-communications"
 
-communications: {}
+communications:
+  default-group:
+    socketSlack:
+      enabled: true
 
 sources:
   kubernetes-errors:
