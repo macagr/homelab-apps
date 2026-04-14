@@ -1,0 +1,30 @@
+communications:
+  default-group:
+    slack:
+      enabled: true
+      channels:
+        default:
+          name: "kubebot"
+          bindings:
+            executors:
+              - kubectl-read-only
+            sources:
+              - kubernetes-errors
+      token:
+        valueFrom:
+          secretKeyRef:
+            name: botkube-slack-secret
+            key: SLACK_BOT_TOKEN
+      appToken:
+        valueFrom:
+          secretKeyRef:
+            name: botkube-slack-secret
+            key: SLACK_APP_TOKEN
+
+# Protect the Raspberry Pis!
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
