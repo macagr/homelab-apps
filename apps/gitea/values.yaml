@@ -1,0 +1,43 @@
+gitea:
+  nodeSelector:
+    kubernetes.io/hostname: node-4
+
+  # Disable all external databases; rely on SQLite
+  postgresql:
+    enabled: false
+  postgresql-ha:
+    enabled: false
+  redis-cluster:
+    enabled: false
+  redis:
+    enabled: false
+  memcached:
+    enabled: false
+
+  gitea:
+    admin:
+      # Look for the templated secret ESO will create
+      existingSecret: gitea-admin-secret
+    config:
+      database:
+        DB_TYPE: sqlite3
+      server:
+        ROOT_URL: "https://git.mcagr.com/"
+        SSH_DOMAIN: "git.mcagr.com"
+        SSH_PORT: 2222
+      actions:
+        ENABLED: true
+        
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: "local-path"
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi

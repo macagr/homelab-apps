@@ -1,0 +1,26 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitea-admin-credentials
+  namespace: gitea
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: 1password 
+    kind: ClusterSecretStore
+  target:
+    name: gitea-admin-secret
+    creationPolicy: Owner
+  data:
+    # --- Item 1: The Credentials ---
+    - secretKey: username
+      remoteRef:
+        key: "gitea-admin/username"
+    - secretKey: password
+      remoteRef:
+        key: "gitea-admin/password"
+        
+    # --- Item 2: The Email Address ---
+    - secretKey: email
+      remoteRef:
+        key: "gitea-email/username" # 
