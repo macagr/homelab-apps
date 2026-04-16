@@ -6,7 +6,7 @@ metadata:
 spec:
   refreshInterval: "1h"
   secretStoreRef:
-    name: 1password 
+    name: onepassword 
     kind: ClusterSecretStore
   target:
     name: gitea-admin-secret
