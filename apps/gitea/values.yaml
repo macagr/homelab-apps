@@ -13,7 +13,11 @@ gitea:
     enabled: false
   memcached:
     enabled: false
-
+  service:
+      ssh:
+        type: LoadBalancer  # Uses K3s built-in LoadBalancer
+        port: 2222          # The external port you want to use
+        targetPort: 22      # The internal container port (Gitea defaults to 22)
   gitea:
     admin:
       # Look for the templated secret ESO will create
