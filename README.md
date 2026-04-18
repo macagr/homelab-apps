@@ -1,4 +1,4 @@
-# homelab-apps
+# homelab-apps - Hosted in Gitea
 
 Kubernetes application manifests for a personal k3s homelab cluster running on
 three Raspberry Pi 4 Model B nodes.
