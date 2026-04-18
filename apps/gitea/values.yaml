@@ -27,6 +27,8 @@ gitea:
         SSH_PORT: 2222
       actions:
         ENABLED: true
+      service:
+        DISABLE_REGISTRATION: true
         
   persistence:
     enabled: true
