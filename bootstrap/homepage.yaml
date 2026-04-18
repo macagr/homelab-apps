@@ -15,7 +15,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/macagr/homelab-apps.git
+    repoURL: https://git.mcagr.com/macagr/homelab-apps.git
     targetRevision: main
     path: apps/homepage
 
