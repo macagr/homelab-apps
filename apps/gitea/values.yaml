@@ -13,13 +13,11 @@ gitea:
     enabled: false
   memcached:
     enabled: false
-service:
-    ssh:
-      type: LoadBalancer
-      port: 2222
-      targetPort: 22
-      annotations:
-        external-dns.alpha.kubernetes.io/hostname: "ssh.git.mcagr.com"
+  service:
+      ssh:
+        type: LoadBalancer  # Uses K3s built-in LoadBalancer
+        port: 2222          # The external port you want to use
+        targetPort: 22      # The internal container port (Gitea defaults to 22)
   gitea:
     admin:
       # Look for the templated secret ESO will create
@@ -29,7 +27,7 @@ service:
         DB_TYPE: sqlite3
       server:
         ROOT_URL: "https://git.mcagr.com/"
-        SSH_DOMAIN: "git.mcagr.com"
+        SSH_DOMAIN: "ssh.git.mcagr.com"
         SSH_PORT: 2222
       actions:
         ENABLED: true
