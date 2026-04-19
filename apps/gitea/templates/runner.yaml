@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea-runner
+  namespace: gitea
+  labels:
+    app.kubernetes.io/name: gitea-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitea-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitea-runner
+    spec:
+      # We put the runner on your heavy-lifter node since building Go/Docker takes CPU
+      nodeSelector:
+        kubernetes.io/hostname: node-4
+      containers:
+        - name: runner
+          # The -dind tag includes Docker daemon so it can build images
+          image: gitea/act_runner:nightly-dind 
+          env:
+            - name: GITEA_INSTANCE_URL
+              value: "https://git.mcagr.com"
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-runner-secret
+                  key: token
+          # Required for Docker-in-Docker to function
+          securityContext:
+            privileged: true 
+          volumeMounts:
+            - name: runner-data
+              mountPath: /data
+      volumes:
+        - name: runner-data
+          emptyDir: {} # Temporary storage for the runner workspace

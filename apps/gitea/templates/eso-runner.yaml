@@ -1,0 +1,17 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-runner-token
+  namespace: gitea
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: onepassword 
+    kind: ClusterSecretStore
+  target:
+    name: gitea-runner-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: token
+      remoteRef:
+        key: "gitea-runner-token/password" 
