@@ -9,7 +9,7 @@ spec:
     name: onepassword 
     kind: ClusterSecretStore
   target:
-    name: gitea-runner-secret
+    name: gitea-act-runner-secret
     creationPolicy: Owner
   data:
     - secretKey: token

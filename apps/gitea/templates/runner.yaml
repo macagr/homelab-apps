@@ -28,7 +28,7 @@ spec:
             - name: GITEA_RUNNER_REGISTRATION_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: gitea-runner-secret
+                  name: gitea-act-runner-secret
                   key: token
           # Required for Docker-in-Docker to function
           securityContext:
