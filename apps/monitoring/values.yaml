@@ -229,6 +229,12 @@ victoria-metrics-agent:
       # Requires `prometheus.enabled: true` in the cilium Ansible role
       # (enabled there alongside this block). Agent pods are identified
       # by the k8s-app=cilium label and scraped on port 9962.
+      #
+      # Why the pod/namespace relabels are load-bearing: the Cilium 1.19
+      # dashboard's `pod` template variable runs `label_values(cilium_version, pod)`
+      # and every panel filters with pod="$pod". Without pod/namespace
+      # labels on the scraped metrics, the dropdown is empty and every
+      # panel shows "No data" even though metrics are landing correctly.
       - job_name: cilium-agent
         kubernetes_sd_configs:
           - role: pod
@@ -243,6 +249,10 @@ victoria-metrics-agent:
             replacement: ${1}:9962
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: node
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
 
 # --------------------------------------------------------------------------
 # Grafana — UI
@@ -312,62 +322,25 @@ grafana:
           isDefault: true
           editable: false
 
-  # Two providers: "default" holds the gnetId-downloaded JSONs (an
-  # emptyDir written to by the init container), "extras" holds the
-  # Cilium dashboard ConfigMap. Using one provider key for both caused
-  # a duplicate volume name (dashboards-default) in the Deployment;
-  # separating them keeps both volume lists unique.
-  dashboardsConfigMaps:
-    extras: grafana-cilium-dashboard
-
-  dashboardProviders:
-    dashboardproviders.yaml:
-      apiVersion: 1
-      providers:
-        - name: default
-          orgId: 1
-          folder: ""
-          type: file
-          disableDeletion: false
-          editable: true
-          options:
-            path: /var/lib/grafana/dashboards/default
-        - name: extras
-          orgId: 1
-          folder: ""
-          type: file
-          disableDeletion: false
-          editable: true
-          options:
-            path: /var/lib/grafana/dashboards/extras
-
-  dashboards:
-    default:
-      # Host-level: CPU, memory, network interface counters (wlan0,
-      # tailscale0, eth0), disk. The single highest-signal dashboard
-      # for network-blip investigation.
-      node-exporter-full:
-        gnetId: 1860
-        revision: 37
-        datasource: VictoriaMetrics
-
-      # Apps view: per-pod CPU / memory / restarts / status, drill-down
-      # by namespace. Backed by kube-state-metrics + cAdvisor.
-      kubernetes-views-pods:
-        gnetId: 15761
-        revision: 37
-        datasource: VictoriaMetrics
-
-      # Pod networking: receive/transmit rates and drops per pod,
-      # grouped by namespace. Uses cAdvisor container_network_* metrics.
-      kubernetes-networking-namespace-pods:
-        gnetId: 15758
-        revision: 37
-        datasource: VictoriaMetrics
-
-      # Cilium agent dashboard is shipped as a ConfigMap (see
-      # templates/cilium-dashboard.yaml) — gnetId 16611 targeted
-      # Cilium 1.13 and showed "No data" against 1.19.2 metric names.
+  # Dashboards come from ConfigMaps (templates/dashboards.yaml) via the
+  # Grafana dashboard sidecar. The sidecar watches the monitoring namespace
+  # for ConfigMaps labelled grafana_dashboard=1, writes their JSON into
+  # the chart-default /tmp/dashboards path, and auto-provisions them.
+  #
+  # Previously used gnetId downloads + dashboardsConfigMaps. Both broke
+  # in practice: grafana.com revisions go 404, the init-container writes
+  # to a PVC-mounted path so stale JSONs persist across deploys, and
+  # mixing dashboardsConfigMaps with gnetId under the same provider key
+  # produces a duplicate-volume error. Local JSONs + sidecar avoids all
+  # of these cleanly — each dashboard is version-controlled, there's no
+  # external download at pod start, and the sidecar uses its own mount
+  # path so there's no conflict with the PVC.
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: monitoring
 
 # --------------------------------------------------------------------------
 # Node exporter — per-host metrics DaemonSet

@@ -1,0 +1,72 @@
+---
+# Grafana dashboards shipped as ConfigMaps, one per dashboard. The
+# grafana dashboard sidecar (sidecar.dashboards.enabled: true in values)
+# watches the namespace for ConfigMaps labelled grafana_dashboard=1,
+# writes their JSON files into /tmp/dashboards (the chart default,
+# mounted as an emptyDir shared with the grafana container), and
+# Grafana's sidecar-managed provider picks them up.
+#
+# Splitting one ConfigMap per dashboard keeps each under the 1 MiB
+# Kubernetes limit (node-exporter-full alone is ~680 KiB). Adding a
+# dashboard = drop the JSON in dashboards/ and add a block below.
+#
+# Source URLs (update when refreshing):
+#   cilium-agent.json                  -> github.com/cilium/cilium @ v1.19.2
+#   kubernetes-views-pods.json         -> github.com/dotdc/grafana-dashboards-kubernetes @ master
+#   kubernetes-views-namespaces.json   -> grafana.com gnetId 15758 rev 37
+#   node-exporter-full.json            -> github.com/rfrail3/grafana-dashboards @ master
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-cilium
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: monitoring
+    grafana_dashboard: "1"
+data:
+  cilium-agent.json: |-
+{{ .Files.Get "dashboards/cilium-agent.json" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-node-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: monitoring
+    grafana_dashboard: "1"
+data:
+  node-exporter-full.json: |-
+{{ .Files.Get "dashboards/node-exporter-full.json" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-k8s-views-pods
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: monitoring
+    grafana_dashboard: "1"
+data:
+  kubernetes-views-pods.json: |-
+{{ .Files.Get "dashboards/kubernetes-views-pods.json" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-k8s-views-namespaces
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: monitoring
+    grafana_dashboard: "1"
+data:
+  kubernetes-views-namespaces.json: |-
+{{ .Files.Get "dashboards/kubernetes-views-namespaces.json" | indent 4 }}
