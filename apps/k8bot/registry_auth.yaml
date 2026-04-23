@@ -9,15 +9,13 @@ spec:
     name: onepassword
     kind: ClusterSecretStore
   target:
-    name: gitea-pull-secret # This MUST match the name in your deployment.yaml
+    name: gitea-pull-secret
     template:
       type: kubernetes.io/dockerconfigjson
       data:
-        # This magically formats the 1Password data into a Docker config file
-        .dockerconfigjson: '{"auths":{"git.mcagr.com":{"username":"{{ .username }}","password":"{{ .password }}","auth":"{{ (printf \"%s:%s\" .username .password) | b64enc }}"}}}'
+        # FIXED: Removed the \ escaping inside the printf function
+        .dockerconfigjson: '{"auths":{"git.mcagr.com":{"username":"{{ .username }}","password":"{{ .password }}","auth":"{{ printf "%s:%s" .username .password | b64enc }}"}}}'
   data:
-    # IMPORTANT: Update these "key" paths to match wherever you 
-    # store your Gitea robot/pull credentials in 1Password
     - secretKey: username
       remoteRef:
         key: "gitea_registry_token/username" 
