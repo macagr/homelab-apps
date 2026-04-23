@@ -253,6 +253,11 @@ victoria-metrics-agent:
             target_label: pod
           - source_labels: [__meta_kubernetes_namespace]
             target_label: namespace
+          # Every panel in the Cilium 1.19 dashboard filters by
+          # k8s_app="cilium". Propagate the k8s-app pod label (dash
+          # rewritten to underscore by the SD) onto scraped metrics.
+          - source_labels: [__meta_kubernetes_pod_label_k8s_app]
+            target_label: k8s_app
 
 # --------------------------------------------------------------------------
 # Grafana — UI
