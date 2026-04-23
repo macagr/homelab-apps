@@ -4,7 +4,7 @@ metadata:
   name: k8bot-tokens-eso
   namespace: k8bot
 spec:
-  refreshInterval: "1h"
+  refreshInterval: "12h"
   secretStoreRef:
     name: onepassword
     kind: ClusterSecretStore
