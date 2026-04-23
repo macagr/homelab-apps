@@ -13,6 +13,8 @@ spec:
     creationPolicy: Owner
     template:
       data:
+        db_password: "{{ .db_password }}"
+
         # We construct the DB URL dynamically so Miniflux can read it natively
         DATABASE_URL: "postgres://miniflux:{{ .db_password }}@rss-db.rss.svc.cluster.local/miniflux?sslmode=disable"
         ADMIN_USERNAME: "{{ .admin_user }}"
