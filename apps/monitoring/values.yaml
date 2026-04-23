@@ -312,30 +312,16 @@ grafana:
           isDefault: true
           editable: false
 
-  # Dashboard sidecar: watches the cluster for ConfigMaps labelled
-  # grafana_dashboard=1 and imports their JSON into Grafana's
-  # provisioning folder. Hot-reloads on change, so updating a
-  # dashboard ConfigMap doesn't require a Grafana restart. Used to
-  # ship version-matched dashboards (e.g. Cilium 1.19.2) that aren't
-  # available as a stable gnetId.
-  sidecar:
-    dashboards:
-      enabled: true
-      label: grafana_dashboard
-      labelValue: "1"
-      searchNamespace: monitoring
-      folder: /var/lib/grafana/dashboards/default
-      provider:
-        name: default
-        orgid: 1
-        folder: ""
-        type: file
-        disableDelete: false
-        allowUiUpdates: true
+  # Mount the Cilium dashboard ConfigMap (see templates/cilium-dashboard.yaml)
+  # alongside the gnetId-downloaded dashboards. Both end up under the same
+  # "default" provider's path, so they coexist cleanly — no sidecar needed.
+  # Earlier attempt used the dashboards sidecar with folder set to
+  # /var/lib/grafana/dashboards/default; the sidecar's emptyDir mount
+  # masked the init-container's downloaded JSONs. dashboardsConfigMaps
+  # uses a plain ConfigMap projection, so no path shadowing.
+  dashboardsConfigMaps:
+    default: grafana-cilium-dashboard
 
-  # Providers block still needed alongside the sidecar so the
-  # gnetId-downloaded dashboards (node-exporter-full, k8s views/pods,
-  # k8s networking) keep working.
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
