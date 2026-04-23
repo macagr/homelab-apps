@@ -26,10 +26,10 @@ spec:
         key: "rss_db_password/password"
     - secretKey: admin_user
       remoteRef:
-        key: "rss_database_admin/username"
+        key: "rss_miniflux_admin/username"
     - secretKey: admin_password
       remoteRef:
-        key: "rss_database_admin/password"
+        key: "rss_miniflux_admin/password"
     - secretKey: tunnel_token
       remoteRef:
         key: "cloudflared_rss/credential"
