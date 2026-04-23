@@ -255,6 +255,16 @@ grafana:
   admin:
     existingSecret: grafana-admin-secret
 
+  # Disable the legacy init-chown-data container. With the chart's
+  # default securityContext.fsGroup: 472 the PVC is group-writable by
+  # the grafana UID on every mount, so the init step is redundant. On
+  # reruns (rolling updates) it actively fails: the old pod has already
+  # created subdirs (png/csv/pdf/...) that the init container — without
+  # CAP_CHOWN on this cluster's PSS profile — can't re-chown. Disabling
+  # it makes rollouts clean.
+  initChownData:
+    enabled: false
+
   service:
     type: ClusterIP
     port: 80
