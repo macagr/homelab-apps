@@ -1,0 +1,33 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rss-secrets-eso
+  namespace: rss
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: onepassword
+    kind: ClusterSecretStore
+  target:
+    name: rss-secrets
+    creationPolicy: Owner
+    template:
+      data:
+        # We construct the DB URL dynamically so Miniflux can read it natively
+        DATABASE_URL: "postgres://miniflux:{{ .db_password }}@rss-db.rss.svc.cluster.local/miniflux?sslmode=disable"
+        ADMIN_USERNAME: "{{ .admin_user }}"
+        ADMIN_PASSWORD: "{{ .admin_password }}"
+        TUNNEL_TOKEN: "{{ .tunnel_token }}"
+  data:
+    - secretKey: db_password
+      remoteRef:
+        key: "rss_db_password/password"
+    - secretKey: admin_user
+      remoteRef:
+        key: "rss_database_admin/username"
+    - secretKey: admin_password
+      remoteRef:
+        key: "rss_database_admin/password"
+    - secretKey: tunnel_token
+      remoteRef:
+        key: "cloudflared_rss/credential"

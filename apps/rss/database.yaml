@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rss-db
+  namespace: rss
+spec:
+  serviceName: "rss-db"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rss-db
+  template:
+    metadata:
+      labels:
+        app: rss-db
+    spec:
+      # 🎯 This pins the pod strictly to node-04
+      nodeSelector:
+        kubernetes.io/hostname: "node-04"
+        
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: "miniflux"
+            - name: POSTGRES_DB
+              value: "miniflux"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rss-secrets
+                  key: db_password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: db-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rss-db
+  namespace: rss
+spec:
+  selector:
+    app: rss-db
+  ports:
+    - port: 5432
+      targetPort: 5432
