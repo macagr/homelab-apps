@@ -26,4 +26,4 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: rss-secrets
-                  key: tunnel_token
+                  key: TUNNEL_TOKEN

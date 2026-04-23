@@ -16,7 +16,7 @@ spec:
     spec:
       # 🎯 This pins the pod strictly to node-04
       nodeSelector:
-        kubernetes.io/hostname: "node-04"
+        tier: "cloud"
         
       containers:
         - name: postgres
