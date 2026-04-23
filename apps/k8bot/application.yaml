@@ -1,0 +1,31 @@
+# Child Application: k8bot
+#
+# Kubernetes Slack Bot. Connects to Slack via Socket Mode to provide
+# cluster monitoring and read-only operations directly from Slack.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: k8bot
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://git.mcagr.com/macagr/k8bot.git
+    targetRevision: main
+    path: deploy/helm/k8bot
+    helm:
+      values: |
+        existingSecret: "k8bot-slack-secrets"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: k8bot
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

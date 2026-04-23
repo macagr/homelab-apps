@@ -1,0 +1,31 @@
+# Bootstrap Application: k8bot
+#
+# Bootstraps the K8bot application and its dependencies (like explicit namespaces
+# and ESO secrets) from the apps/k8bot directory.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: k8bot-infra
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://git.mcagr.com/macagr/homelab-apps.git
+    targetRevision: main
+    path: apps/k8bot
+
+  # For bootstrap apps applying mixed-scope resources (namespaces + apps), 
+  # it is standard practice to target the default or argocd namespace here, 
+  # as the child manifests explicitly define their own destinations.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
