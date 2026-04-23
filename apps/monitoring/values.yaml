@@ -44,7 +44,7 @@ victoria-metrics-agent:
   fullnameOverride: vmagent
 
   remoteWrite:
-    - url: http://vmsingle:8428/api/v1/write
+    - url: http://vmsingle-server:8428/api/v1/write
 
   # Single Deployment replica is enough for ~6 nodes / a few hundred
   # scrape targets. If metric volume grows, split into a DaemonSet later.
@@ -74,13 +74,25 @@ victoria-metrics-agent:
 
     scrape_configs:
       # ---- self ---------------------------------------------------------
+      # vmagent self-scrape uses Kubernetes SD because the agent chart
+      # doesn't create a Service by default. Finds the agent pod by its
+      # well-known label and scrapes :8429 on the pod IP directly.
       - job_name: vmagent
-        static_configs:
-          - targets: [vmagent:8429]
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [monitoring]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            regex: vmagent
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: ${1}:8429
 
       - job_name: vmsingle
         static_configs:
-          - targets: [vmsingle:8428]
+          - targets: [vmsingle-server:8428]
 
       # ---- host metrics (node-exporter DaemonSet) ----------------------
       # Kubernetes SD picks up the Service created by
@@ -286,7 +298,7 @@ grafana:
         - name: VictoriaMetrics
           type: prometheus
           access: proxy
-          url: http://vmsingle:8428
+          url: http://vmsingle-server:8428
           isDefault: true
           editable: false
 

@@ -30,3 +30,16 @@ spec:
       # resources. Matches the pattern expected by Grafana's sizeable
       # datasources / dashboards ConfigMaps.
       - ServerSideApply=true
+  # ESO's mutating webhook fills in defaults for these fields on
+  # ExternalSecret (Default / None / None / Ignore). They aren't in git
+  # — and never will be — so ArgoCD would otherwise report permanent
+  # drift. Ignoring the specific fields (not the whole spec.data block)
+  # keeps real drift visible if someone hand-edits a remoteRef key.
+  ignoreDifferences:
+    - group: external-secrets.io
+      kind: ExternalSecret
+      jqPathExpressions:
+        - '.spec.data[].remoteRef.conversionStrategy'
+        - '.spec.data[].remoteRef.decodingStrategy'
+        - '.spec.data[].remoteRef.metadataPolicy'
+        - '.spec.data[].remoteRef.nullBytePolicy'
