@@ -225,24 +225,24 @@ victoria-metrics-agent:
             regex: kubernetes;https
             action: keep
 
-      # ---- Cilium agent metrics (DISABLED by default) -----------------
-      # Enabling this requires `prometheus.enabled: true` in the Cilium
-      # Helm values, which rolls the agent DaemonSet across every node
-      # (gotchas.md §3 — briefly breaks valkey quorum, MetalLB
-      # memberlist, and user-facing apps for ~1-2 min). Turn on in a
-      # planned window, then uncomment below.
-      # - job_name: cilium-agent
-      #   kubernetes_sd_configs:
-      #     - role: pod
-      #       namespaces:
-      #         names: [kube-system]
-      #   relabel_configs:
-      #     - source_labels: [__meta_kubernetes_pod_label_k8s_app]
-      #       regex: cilium
-      #       action: keep
-      #     - source_labels: [__meta_kubernetes_pod_ip]
-      #       target_label: __address__
-      #       replacement: ${1}:9962
+      # ---- Cilium agent metrics ---------------------------------------
+      # Requires `prometheus.enabled: true` in the cilium Ansible role
+      # (enabled there alongside this block). Agent pods are identified
+      # by the k8s-app=cilium label and scraped on port 9962.
+      - job_name: cilium-agent
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [kube-system]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_k8s_app]
+            regex: cilium
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: ${1}:9962
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
 
 # --------------------------------------------------------------------------
 # Grafana — UI
@@ -331,9 +331,33 @@ grafana:
 
   dashboards:
     default:
+      # Host-level: CPU, memory, network interface counters (wlan0,
+      # tailscale0, eth0), disk. The single highest-signal dashboard
+      # for network-blip investigation.
       node-exporter-full:
         gnetId: 1860
         revision: 37
+        datasource: VictoriaMetrics
+
+      # Apps view: per-pod CPU / memory / restarts / status, drill-down
+      # by namespace. Backed by kube-state-metrics + cAdvisor.
+      kubernetes-views-pods:
+        gnetId: 15761
+        revision: 37
+        datasource: VictoriaMetrics
+
+      # Pod networking: receive/transmit rates and drops per pod,
+      # grouped by namespace. Uses cAdvisor container_network_* metrics.
+      kubernetes-networking-namespace-pods:
+        gnetId: 15758
+        revision: 37
+        datasource: VictoriaMetrics
+
+      # Cilium agent: BPF map pressure, connection tracking, drop
+      # reasons, policy verdicts. Core networking datapath visibility.
+      cilium-agent:
+        gnetId: 16611
+        revision: 1
         datasource: VictoriaMetrics
 
 # --------------------------------------------------------------------------
@@ -372,7 +396,17 @@ kube-state-metrics:
 
   resources:
     requests:
-      cpu: 25m
+      cpu: 50m
       memory: 64Mi
     limits:
-      memory: 192Mi
+      memory: 256Mi
+
+  # KSM serves /livez on port 8080 — the same port that returns the full
+  # /metrics payload. While vmagent is pulling a scrape the livez handler
+  # can take more than the chart default 5s timeout, and kubelet kills an
+  # otherwise-healthy pod (exit 2 via SIGTERM, no app-side crash). A
+  # looser probe tolerates the contention without hiding real hangs.
+  livenessProbe:
+    timeoutSeconds: 15
+    failureThreshold: 5
+    periodSeconds: 30
