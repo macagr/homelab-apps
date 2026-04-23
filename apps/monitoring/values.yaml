@@ -312,10 +312,30 @@ grafana:
           isDefault: true
           editable: false
 
-  # One curated dashboard ships pre-provisioned: Node Exporter Full.
-  # It's the single highest-signal dashboard for blip investigation
-  # (per-interface drops, CPU steal, memory pressure). Anything else
-  # the user can import from grafana.com at runtime.
+  # Dashboard sidecar: watches the cluster for ConfigMaps labelled
+  # grafana_dashboard=1 and imports their JSON into Grafana's
+  # provisioning folder. Hot-reloads on change, so updating a
+  # dashboard ConfigMap doesn't require a Grafana restart. Used to
+  # ship version-matched dashboards (e.g. Cilium 1.19.2) that aren't
+  # available as a stable gnetId.
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: monitoring
+      folder: /var/lib/grafana/dashboards/default
+      provider:
+        name: default
+        orgid: 1
+        folder: ""
+        type: file
+        disableDelete: false
+        allowUiUpdates: true
+
+  # Providers block still needed alongside the sidecar so the
+  # gnetId-downloaded dashboards (node-exporter-full, k8s views/pods,
+  # k8s networking) keep working.
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -353,12 +373,9 @@ grafana:
         revision: 37
         datasource: VictoriaMetrics
 
-      # Cilium agent: BPF map pressure, connection tracking, drop
-      # reasons, policy verdicts. Core networking datapath visibility.
-      cilium-agent:
-        gnetId: 16611
-        revision: 1
-        datasource: VictoriaMetrics
+      # Cilium agent dashboard is shipped as a ConfigMap (see
+      # templates/cilium-dashboard.yaml) — gnetId 16611 targeted
+      # Cilium 1.13 and showed "No data" against 1.19.2 metric names.
 
 # --------------------------------------------------------------------------
 # Node exporter — per-host metrics DaemonSet

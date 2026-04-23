@@ -1,0 +1,23 @@
+---
+# Cilium 1.19 agent dashboard, shipped as a ConfigMap and picked up by
+# Grafana's dashboard sidecar (sidecar.dashboards.enabled in values).
+#
+# The JSON comes from cilium's own repo, pinned to the release we run:
+# https://github.com/cilium/cilium/blob/v1.19.2/install/kubernetes/cilium/files/cilium-agent/dashboards/cilium-dashboard.json
+#
+# To update after a Cilium version bump, replace the file at
+# dashboards/cilium-agent.json with the matching upstream copy; the
+# sidecar hot-reloads within ~30s — no Grafana restart needed.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-cilium-dashboard
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: monitoring
+    grafana_dashboard: "1"
+data:
+  cilium-agent.json: |-
+{{ .Files.Get "dashboards/cilium-agent.json" | indent 4 }}
