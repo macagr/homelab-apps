@@ -43,8 +43,8 @@ victoria-metrics-single:
 victoria-metrics-agent:
   fullnameOverride: vmagent
 
-  remoteWriteUrls:
-    - http://vmsingle:8428/api/v1/write
+  remoteWrite:
+    - url: http://vmsingle:8428/api/v1/write
 
   # Single Deployment replica is enough for ~6 nodes / a few hundred
   # scrape targets. If metric volume grows, split into a DaemonSet later.
