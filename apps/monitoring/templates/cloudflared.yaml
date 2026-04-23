@@ -1,0 +1,57 @@
+---
+# Cloudflared tunnel for grafana.mcagr.com.
+#
+# The tunnel's route (grafana.mcagr.com → http://grafana.monitoring.svc:80)
+# is configured in the Cloudflare Zero Trust dashboard, not in this manifest.
+# Same model as the rss app's cloudflared Deployment.
+#
+# Pinned to node-4 so the tunnel stays up when the home uplink flaps:
+# node-4's Hetzner uplink is independent of the home ISP, which is the
+# path where most of the observed network blips originate.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: cloudflared
+    app.kubernetes.io/component: tunnel
+    app.kubernetes.io/part-of: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared
+      app.kubernetes.io/part-of: monitoring
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflared
+        app.kubernetes.io/component: tunnel
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node-4
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:latest
+          args:
+            - tunnel
+            - --no-autoupdate
+            - run
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloudflared-secret
+                  key: TUNNEL_TOKEN
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false

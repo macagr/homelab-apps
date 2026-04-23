@@ -1,0 +1,24 @@
+apiVersion: v2
+name: monitoring-stack
+version: 1.0.0
+description: >
+  VictoriaMetrics + Grafana observability stack for the homelab cluster.
+  Component charts (no VM Operator / CRDs) to keep the ArgoCD sync surface
+  and RAM footprint small. Logs (VictoriaLogs) are intentionally deferred
+  to a future revision.
+dependencies:
+  - name: victoria-metrics-single
+    version: "0.21.0"
+    repository: https://victoriametrics.github.io/helm-charts/
+  - name: victoria-metrics-agent
+    version: "0.25.0"
+    repository: https://victoriametrics.github.io/helm-charts/
+  - name: grafana
+    version: "9.3.0"
+    repository: https://grafana.github.io/helm-charts
+  - name: prometheus-node-exporter
+    version: "4.45.0"
+    repository: https://prometheus-community.github.io/helm-charts
+  - name: kube-state-metrics
+    version: "6.2.0"
+    repository: https://prometheus-community.github.io/helm-charts

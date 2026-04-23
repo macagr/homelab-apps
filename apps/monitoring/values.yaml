@@ -1,0 +1,356 @@
+# Monitoring stack values.
+#
+# Placement: every server-side component is pinned to node-4 (large RAM,
+# cloud uplink independent of home internet). node-exporter is a DaemonSet
+# that runs everywhere and tolerates every taint so pi-02's
+# dedicated=lightweight:NoSchedule isn't an exclusion.
+
+# --------------------------------------------------------------------------
+# VictoriaMetrics — TSDB
+# --------------------------------------------------------------------------
+victoria-metrics-single:
+  # Deterministic Service name so scrape targets / datasource URLs don't
+  # break if the chart's fullname template changes across upgrades.
+  fullnameOverride: vmsingle
+
+  server:
+    retentionPeriod: "7d"
+    # Default is 60%; at 40% VMSingle stays within its memory limit even
+    # on node-4 when other cloud workloads need RAM.
+    extraArgs:
+      memory.allowedPercent: "40"
+
+    persistentVolume:
+      enabled: true
+      storageClass: local-path
+      size: 20Gi
+      accessModes:
+        - ReadWriteOnce
+
+    nodeSelector:
+      kubernetes.io/hostname: node-4
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 150Mi
+      limits:
+        memory: 500Mi
+
+# --------------------------------------------------------------------------
+# vmagent — scrapes everything, remote_writes to VMSingle
+# --------------------------------------------------------------------------
+victoria-metrics-agent:
+  fullnameOverride: vmagent
+
+  remoteWriteUrls:
+    - http://vmsingle:8428/api/v1/write
+
+  # Single Deployment replica is enough for ~6 nodes / a few hundred
+  # scrape targets. If metric volume grows, split into a DaemonSet later.
+  replicaCount: 1
+
+  nodeSelector:
+    kubernetes.io/hostname: node-4
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      memory: 250Mi
+
+  # Chart default rbac.create: true is kept — vmagent needs cluster-wide
+  # read on nodes/proxy, endpoints, services, pods for Kubernetes SD.
+  rbac:
+    create: true
+
+  config:
+    global:
+      scrape_interval: 30s
+      scrape_timeout: 10s
+      external_labels:
+        cluster: homelab
+
+    scrape_configs:
+      # ---- self ---------------------------------------------------------
+      - job_name: vmagent
+        static_configs:
+          - targets: [vmagent:8429]
+
+      - job_name: vmsingle
+        static_configs:
+          - targets: [vmsingle:8428]
+
+      # ---- host metrics (node-exporter DaemonSet) ----------------------
+      # Kubernetes SD picks up the Service created by
+      # prometheus-node-exporter; the node label is copied from the pod's
+      # spec.nodeName so every host metric is tagged with its source node.
+      - job_name: node-exporter
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: [monitoring]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            regex: node-exporter
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
+
+      # ---- Kubernetes object state ------------------------------------
+      - job_name: kube-state-metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: [monitoring]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            regex: kube-state-metrics
+            action: keep
+
+      # ---- kubelet (node health) --------------------------------------
+      # Scraped via the apiserver proxy to avoid per-node cert trust
+      # configuration. Low volume; no apiserver load concern at this scale.
+      - job_name: kubelet
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      # ---- cAdvisor (per-container CPU / memory / IO) -----------------
+      - job_name: kubelet-cadvisor
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
+      # ---- NodeLocalDNS cache pods (port 9253) ------------------------
+      # One cache pod per node; metrics expose cache hit/miss and
+      # upstream forward latency. DNS is in the blip symptom chain, so
+      # this is high-value.
+      - job_name: node-local-dns
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [kube-system]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_k8s_app]
+            regex: node-local-dns
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: ${1}:9253
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
+
+      # ---- CoreDNS (upstream from NodeLocalDNS) -----------------------
+      - job_name: coredns
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: [kube-system]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            regex: kube-dns
+            action: keep
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            regex: metrics
+            action: keep
+
+      # ---- Traefik (ingress) ------------------------------------------
+      # Traefik chart exposes its /metrics endpoint on container port
+      # "metrics" when metrics.prometheus.* is set in its role values.
+      # Until that's enabled, this job returns no targets (harmless).
+      - job_name: traefik
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [traefik]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            regex: traefik
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            regex: metrics
+            action: keep
+
+      # ---- kube-apiserver (endpoints-based) ---------------------------
+      - job_name: kube-apiserver
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: [default]
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_service_name
+              - __meta_kubernetes_endpoint_port_name
+            regex: kubernetes;https
+            action: keep
+
+      # ---- Cilium agent metrics (DISABLED by default) -----------------
+      # Enabling this requires `prometheus.enabled: true` in the Cilium
+      # Helm values, which rolls the agent DaemonSet across every node
+      # (gotchas.md §3 — briefly breaks valkey quorum, MetalLB
+      # memberlist, and user-facing apps for ~1-2 min). Turn on in a
+      # planned window, then uncomment below.
+      # - job_name: cilium-agent
+      #   kubernetes_sd_configs:
+      #     - role: pod
+      #       namespaces:
+      #         names: [kube-system]
+      #   relabel_configs:
+      #     - source_labels: [__meta_kubernetes_pod_label_k8s_app]
+      #       regex: cilium
+      #       action: keep
+      #     - source_labels: [__meta_kubernetes_pod_ip]
+      #       target_label: __address__
+      #       replacement: ${1}:9962
+
+# --------------------------------------------------------------------------
+# Grafana — UI
+# --------------------------------------------------------------------------
+grafana:
+  fullnameOverride: grafana
+
+  # Credentials come from the ExternalSecret in templates/eso.yaml.
+  # Chart defaults expect keys `admin-user` and `admin-password`.
+  admin:
+    existingSecret: grafana-admin-secret
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  nodeSelector:
+    kubernetes.io/hostname: node-4
+
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: local-path
+    size: 2Gi
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      memory: 300Mi
+
+  # Cloudflared terminates TLS at the edge and forwards HTTP to this
+  # Service. Grafana therefore needs to know its public URL (for redirects,
+  # OAuth callbacks, etc.) and trust the tunnel's forwarded headers.
+  grafana.ini:
+    server:
+      root_url: "https://grafana.mcagr.com/"
+      # Cloudflared sends the original scheme via X-Forwarded-Proto; this
+      # keeps Grafana from generating http:// links behind an https:// edge.
+      enforce_domain: false
+    security:
+      cookie_secure: true
+
+  # Pre-wire VictoriaMetrics as the default datasource. Grafana speaks
+  # the Prometheus wire protocol to VMSingle transparently.
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: VictoriaMetrics
+          type: prometheus
+          access: proxy
+          url: http://vmsingle:8428
+          isDefault: true
+          editable: false
+
+  # One curated dashboard ships pre-provisioned: Node Exporter Full.
+  # It's the single highest-signal dashboard for blip investigation
+  # (per-interface drops, CPU steal, memory pressure). Anything else
+  # the user can import from grafana.com at runtime.
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: default
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+  dashboards:
+    default:
+      node-exporter-full:
+        gnetId: 1860
+        revision: 37
+        datasource: VictoriaMetrics
+
+# --------------------------------------------------------------------------
+# Node exporter — per-host metrics DaemonSet
+# --------------------------------------------------------------------------
+prometheus-node-exporter:
+  fullnameOverride: node-exporter
+
+  # node-exporter reads /proc and /sys; upstream image runs as a
+  # non-privileged user with hostPID / hostNetwork. The chart handles
+  # the securityContext correctly — don't override.
+
+  # Run on every node, including pi-02 (dedicated=lightweight) and any
+  # future tainted node. Same pattern as NodeLocalDNS.
+  tolerations:
+    - effect: NoSchedule
+      operator: Exists
+    - effect: NoExecute
+      operator: Exists
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# --------------------------------------------------------------------------
+# kube-state-metrics — Kubernetes object state
+# --------------------------------------------------------------------------
+kube-state-metrics:
+  fullnameOverride: kube-state-metrics
+
+  nodeSelector:
+    kubernetes.io/hostname: node-4
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 192Mi

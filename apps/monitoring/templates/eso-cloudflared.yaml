@@ -1,0 +1,23 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-cloudflared-credentials
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: cloudflared
+    app.kubernetes.io/component: tunnel
+    app.kubernetes.io/part-of: monitoring
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: onepassword
+    kind: ClusterSecretStore
+  target:
+    name: grafana-cloudflared-secret
+    creationPolicy: Owner
+  data:
+    # Mirrors the rss app pattern: the token is consumed as
+    # TUNNEL_TOKEN by the cloudflared container.
+    - secretKey: TUNNEL_TOKEN
+      remoteRef:
+        key: "cloudflared_grafana/credential"
