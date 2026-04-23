@@ -57,7 +57,7 @@
       <outline type="rss" text="OpenSSF CRA Tag" xmlUrl="https://openssf.org/tag/cra/feed/" htmlUrl="https://openssf.org/tag/cra/"/>
     </outline>
     <outline text="10. Specific People" title="10. Specific People">
-      <outline type="rss" text="Rory McCune" xmlUrl="https://www.mccune.org.uk/articles/feed.xml" htmlUrl="https://www.mccune.org.uk/articles/"/>
+      <outline type="rss" text="Rory McCune" xmlUrl="https://raesene.github.io/feed.xml" htmlUrl="https://raesene.github.io/"/>
       <outline type="rss" text="Natalie Somersall" xmlUrl="https://some-natalie.dev/feed.xml" htmlUrl="https://some-natalie.dev/"/>
       <outline type="rss" text="Ahmet Alp Balkan" xmlUrl="https://ahmet.im/blog/index.xml" htmlUrl="https://ahmet.im/blog/"/>
       <outline type="rss" text="Adrian Mouat" xmlUrl="https://adrianmouat.com/index.xml" htmlUrl="https://adrianmouat.com/"/>
