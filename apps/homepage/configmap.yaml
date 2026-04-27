@@ -96,12 +96,12 @@ data:
     <body>
       <div class="container">
         <h1>mcagr homelab</h1>
-        <p class="subtitle">Raspberry Pi k3s cluster &mdash; deployed via GitOps</p>
+        <p class="subtitle">Six-node k3s cluster spanning home + cloud &mdash; deployed via GitOps</p>
 
         <div class="nodes">
           <div class="node">
             <div class="node-name">pi-01</div>
-            <div class="node-detail">4 GB &middot; server &middot; HDD</div>
+            <div class="node-detail">4 GB &middot; control plane &middot; HDD</div>
           </div>
           <div class="node">
             <div class="node-name">pi-02</div>
@@ -112,8 +112,16 @@ data:
             <div class="node-detail">4 GB &middot; agent &middot; HDD</div>
           </div>
           <div class="node">
+            <div class="node-name">odroid-01</div>
+            <div class="node-detail">4 GB &middot; agent &middot; SD</div>
+          </div>
+          <div class="node">
+            <div class="node-name">odroid-02</div>
+            <div class="node-detail">4 GB &middot; agent &middot; SD</div>
+          </div>
+          <div class="node">
             <div class="node-name">node-4</div>
-            <div class="node-detail">8 GB &middot; agent &middot; Hetzner</div>
+            <div class="node-detail">8 GB &middot; cloud agent &middot; SSD</div>
           </div>
         </div>
 
