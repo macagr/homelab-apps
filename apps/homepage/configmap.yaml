@@ -101,15 +101,15 @@ data:
         <div class="nodes">
           <div class="node">
             <div class="node-name">pi-01</div>
-            <div class="node-detail">4 GB &middot; server &middot; SSD</div>
+            <div class="node-detail">4 GB &middot; server &middot; HDD</div>
           </div>
           <div class="node">
             <div class="node-name">pi-02</div>
-            <div class="node-detail">2 GB &middot; agent &middot; SSD</div>
+            <div class="node-detail">2 GB &middot; agent &middot; HDD</div>
           </div>
           <div class="node">
             <div class="node-name">pi-03</div>
-            <div class="node-detail">4 GB &middot; agent &middot; microSD</div>
+            <div class="node-detail">4 GB &middot; agent &middot; HDD</div>
           </div>
           <div class="node">
             <div class="node-name">node-4</div>

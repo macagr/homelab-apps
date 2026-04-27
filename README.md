@@ -1,7 +1,8 @@
 # homelab-apps - Hosted in Gitea
 
-Kubernetes application manifests for a personal k3s homelab cluster running on
-three Raspberry Pi 4 Model B nodes.
+Kubernetes application manifests for a personal k3s homelab cluster spanning
+three Raspberry Pi 4B nodes, two ODROID-C4 boards, and a Hetzner cloud node
+(see the homelab repo for the full hardware table).
 
 > **Note:** This repo is a learning exercise. The goal is to practice the
 > architectural patterns senior platform engineers use to run real clusters —
@@ -42,7 +43,7 @@ deploys into its own dedicated Kubernetes namespace (see [Conventions](docs/conv
 | Resource limits | Every container must declare `requests` and `limits` for both CPU and memory |
 | Non-root | Containers must run as non-root where the upstream image supports it (`runAsNonRoot: true`) |
 | Secrets | No real secrets ever committed — use `REPLACE_ME_BEFORE_DEPLOY` placeholders (see [Secrets](docs/secrets.md)) |
-| Stateful workloads | Must include `nodeSelector: storage: ssd` to avoid landing on the microSD node |
+| Stateful workloads | Must include `nodeSelector: storage: ssd` — in the current cluster only node-4 carries this label, so stateful work lands on the cloud node and avoids the home HDD/SD nodes |
 
 Full details in [docs/conventions.md](docs/conventions.md).
 

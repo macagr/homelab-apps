@@ -14,10 +14,11 @@ spec:
       labels:
         app: rss-db
     spec:
-      # 🎯 This pins the pod strictly to node-04
+      # Pin to the cloud node (node-4) — only home node-location values
+      # are home; cloud is unique to node-4.
       nodeSelector:
-        tier: "cloud"
-        
+        node-location: cloud
+
       containers:
         - name: postgres
           image: postgres:15-alpine

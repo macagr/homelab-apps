@@ -102,8 +102,9 @@ securityContext:
 ## Stateful workloads
 
 Workloads that need persistent storage must include a `nodeSelector` that pins them
-to nodes with SSD storage. The cluster has one node whose boot media is a microSD
-card; landing stateful workloads there leads to data loss and card wear.
+to a node with SSD storage. The home nodes boot from USB HDDs (pis) or SD/eMMC
+(odroids) — neither is appropriate for write-heavy persistent state. Only the cloud
+node (node-4) has SSD storage.
 
 ```yaml
 nodeSelector:
@@ -111,10 +112,12 @@ nodeSelector:
 ```
 
 This selector must appear on every `Pod` spec (directly or via a Deployment/
-StatefulSet template) that mounts a PersistentVolumeClaim.
+StatefulSet template) that mounts a PersistentVolumeClaim. In the current cluster
+this resolves to node-4 (Hetzner) — accept the Tailscale latency or redesign the
+workload to be stateless.
 
-Nodes with SSDs should have this label applied via the Ansible homelab repo. Verify
-with `kubectl get nodes --show-labels` before deploying.
+The `storage` label is applied per-node by the Ansible `k3s_labels` role. Verify
+with `kubectl get nodes -L storage` before deploying.
 
 ---
 
