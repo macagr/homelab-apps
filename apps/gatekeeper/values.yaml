@@ -1,0 +1,84 @@
+# Gatekeeper Helm chart overrides.
+# Decisions documented in docs/gatekeeper.md.
+# All keys nested under `gatekeeper:` because this is an umbrella chart and
+# the upstream values live under that dependency name.
+
+gatekeeper:
+  # ── Replicas (controller-manager only; audit is always 1) ───────────────
+  replicas: 2
+
+  # ── Controller-manager (admission webhook) ──────────────────────────────
+  # Placement follows the documented HA-across-Tailscale scheme used by
+  # cert-manager and external-secrets: two replicas spread across pi-03
+  # (steady-state, home LAN) and node-4 (cloud, Tailscale fallback).
+  controllerManager:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - { key: workload, operator: In, values: [apps] }
+            - matchExpressions:
+                - { key: node-location, operator: In, values: [cloud] }
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - { key: workload, operator: In, values: [apps] }
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  control-plane: controller-manager
+              topologyKey: kubernetes.io/hostname
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    # Webhook bypass for infrastructure namespaces. See docs/gatekeeper.md §3.7.
+    exemptNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - argocd
+      - cert-manager
+      - external-secrets
+      - metallb-system
+      - traefik
+      - external-dns
+      - registry-mirror
+
+  # ── Audit (periodic cluster crawl) ──────────────────────────────────────
+  # Single replica on node-4: only SSD-backed node, plenty of RAM headroom,
+  # ~50 ms Tailscale latency on a 5-minute loop is trivial.
+  audit:
+    nodeSelector:
+      node-location: cloud
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+
+  # ── Tuning ──────────────────────────────────────────────────────────────
+  auditInterval: 300              # 5 min (default 60); cuts kine write churn
+  auditChunkSize: 500
+  constraintViolationsLimit: 50
+
+  # ── Failure mode ────────────────────────────────────────────────────────
+  # failOpen during ramp. Revisit once a baseline policy set is stable.
+  validatingWebhookFailurePolicy: Ignore
+
+  # ── Validation only — no mutation ───────────────────────────────────────
+  disableMutation: true
+
+  # ── Logging ─────────────────────────────────────────────────────────────
+  logLevel: WARN
+  logDenies: true                 # surface policy denials even at WARN level
+
+  # ── Disabled features (re-enable when there's a concrete need) ──────────
+  enableExternalData: false

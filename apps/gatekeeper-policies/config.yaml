@@ -1,0 +1,35 @@
+# Gatekeeper Config CR: scopes the audit + sync to the kinds and namespaces
+# we actually care about. See ../../docs/gatekeeper.md §3.7.
+#
+# excludedNamespaces here mirrors controllerManager.exemptNamespaces in the
+# operator's values.yaml — keep them in sync.
+#
+# Sync wave 1: lands together with the ConstraintTemplates, before any
+# Constraints. The Config CRD ships with the operator (wave 0), so it is
+# guaranteed to exist by the time this is applied.
+
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: Config
+metadata:
+  name: config
+  namespace: gatekeeper-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  match:
+    - excludedNamespaces:
+        - kube-system
+        - gatekeeper-system
+        - argocd
+        - cert-manager
+        - external-secrets
+        - metallb-system
+        - traefik
+        - external-dns
+        - registry-mirror
+      processes: ["*"]
+  # sync.syncOnly limits what audit watches. Empty = all kinds (default);
+  # populate this once we know which kinds our policies actually inspect to
+  # cut audit memory + apiserver load.
+  sync:
+    syncOnly: []

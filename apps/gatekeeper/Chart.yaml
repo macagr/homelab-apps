@@ -1,0 +1,13 @@
+apiVersion: v2
+name: gatekeeper-stack
+version: 1.0.0
+description: |
+  Umbrella chart wrapping the upstream open-policy-agent/gatekeeper chart.
+  Locks the chart version and applies homelab-specific overrides
+  (placement, resource budget, audit interval, exempt namespaces) via
+  values.yaml. See ../../docs/gatekeeper.md for the architectural
+  decisions encoded here.
+dependencies:
+  - name: gatekeeper
+    version: 3.22.2
+    repository: https://open-policy-agent.github.io/gatekeeper/charts

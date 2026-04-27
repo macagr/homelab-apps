@@ -1,0 +1,42 @@
+# Child Application: gatekeeper-policies
+#
+# ConstraintTemplates, Constraint instances, and the Gatekeeper Config CR.
+# Lifecycle and authoring conventions in apps/../docs/gatekeeper.md.
+#
+# Sync wave 1 — must come up after gatekeeper (wave 0) so that the
+# ConstraintTemplate CRD exists. Inside this Application, individual
+# manifests carry their own sync-wave annotations: Config CR + Templates
+# at wave 1, Constraint instances at wave 2 (because Constraints depend on
+# the per-template CRDs that ConstraintTemplates dynamically generate).
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatekeeper-policies
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+
+  source:
+    repoURL: https://git.mcagr.com/macagr/homelab-apps.git
+    targetRevision: main
+    path: apps/gatekeeper-policies
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gatekeeper-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # Required for ConstraintTemplate updates and the dynamically-generated
+      # CRDs that they create. See docs/gatekeeper.md §3.8.
+      - ServerSideApply=true
+      - Replace=true
+      - SkipDryRunOnMissingResource=true

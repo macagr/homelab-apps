@@ -1,0 +1,40 @@
+# Child Application: gatekeeper
+#
+# Admission policy controller. Umbrella chart wrapping
+# open-policy-agent/gatekeeper v3.22.2. Decisions documented in
+# apps/../docs/gatekeeper.md.
+#
+# Sync wave 0 — must come up before gatekeeper-policies (wave 1) so the
+# ConstraintTemplate CRD exists before any ConstraintTemplate manifests
+# are applied.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatekeeper
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+
+  source:
+    repoURL: https://git.mcagr.com/macagr/homelab-apps.git
+    targetRevision: main
+    path: apps/gatekeeper
+    helm:
+      releaseName: gatekeeper
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gatekeeper-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
