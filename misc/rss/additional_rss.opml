@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>Full Platform Security Intelligence</title>
+  </head>
+  <body>
+    <outline text="01. K8s &amp; CNCF Core" title="01. K8s &amp; CNCF Core">
+      <outline type="rss" text="Kubernetes Blog" xmlUrl="https://kubernetes.io/feed.xml" htmlUrl="https://kubernetes.io/blog/"/>
+      <outline type="rss" text="K8s Official CVE Feed" xmlUrl="https://k8s.io/docs/reference/issues-security/official-cve-feed/feed.xml" htmlUrl="https://kubernetes.io/docs/reference/issues-security/official-cve-feed/"/>
+    </outline>
+
+    <outline text="03. K8s Security &amp; Runtime" title="03. K8s Security &amp; Runtime">
+      <outline type="atom" text="Falco Releases" xmlUrl="https://github.com/falcosecurity/falco/releases.atom" htmlUrl="https://github.com/falcosecurity/falco/releases"/>
+      <outline type="atom" text="Tetragon Releases" xmlUrl="https://github.com/cilium/tetragon/releases.atom" htmlUrl="https://github.com/cilium/tetragon/releases"/>
+      <outline type="atom" text="Containerd Releases" xmlUrl="https://github.com/containerd/containerd/releases.atom" htmlUrl="https://github.com/containerd/containerd/releases"/>
+      <outline type="atom" text="cert-manager Releases" xmlUrl="https://github.com/cert-manager/cert-manager/releases.atom" htmlUrl="https://github.com/cert-manager/cert-manager/releases"/>
+    </outline>
+
+    <outline text="04. Identity &amp; PKI" title="04. Identity &amp; PKI">
+      <outline type="rss" text="Let's Encrypt Blog" xmlUrl="https://letsencrypt.org/feed.xml" htmlUrl="https://letsencrypt.org/blog/"/>
+      <outline type="atom" text="SPIRE Releases" xmlUrl="https://github.com/spiffe/spire/releases.atom" htmlUrl="https://github.com/spiffe/spire/releases"/>
+      <outline type="atom" text="step-ca Releases" xmlUrl="https://github.com/smallstep/certificates/releases.atom" htmlUrl="https://github.com/smallstep/certificates/releases"/>
+    </outline>
+
+    <outline text="05. Policy as Code" title="05. Policy as Code">
+      <outline type="rss" text="Kubewarden Blog" xmlUrl="https://www.kubewarden.io/blog/index.xml" htmlUrl="https://www.kubewarden.io/blog/"/>
+      <outline type="atom" text="Kyverno Releases" xmlUrl="https://github.com/kyverno/kyverno/releases.atom" htmlUrl="https://github.com/kyverno/kyverno/releases"/>
+      <outline type="atom" text="OPA Releases" xmlUrl="https://github.com/open-policy-agent/opa/releases.atom" htmlUrl="https://github.com/open-policy-agent/opa/releases"/>
+      <outline type="atom" text="Gatekeeper Releases" xmlUrl="https://github.com/open-policy-agent/gatekeeper/releases.atom" htmlUrl="https://github.com/open-policy-agent/gatekeeper/releases"/>
+    </outline>
+
+    <outline text="06. Supply Chain Security" title="06. Supply Chain Security">
+      <outline type="rss" text="Sigstore Blog" xmlUrl="https://blog.sigstore.dev/index.xml" htmlUrl="https://blog.sigstore.dev/"/>
+      <outline type="rss" text="OpenSSF Blog" xmlUrl="https://openssf.org/blog/feed/" htmlUrl="https://openssf.org/blog/"/>
+      <outline type="rss" text="OpenSSF Newsletter" xmlUrl="https://openssf.org/newsletter/feed/" htmlUrl="https://openssf.org/newsletter/"/>
+      <outline type="rss" text="Trail of Bits" xmlUrl="https://blog.trailofbits.com/feed/" htmlUrl="https://blog.trailofbits.com/"/>
+      <outline type="atom" text="GUAC Releases" xmlUrl="https://github.com/guacsec/guac/releases.atom" htmlUrl="https://github.com/guacsec/guac/releases"/>
+      <outline type="atom" text="SLSA GitHub Generator Releases" xmlUrl="https://github.com/slsa-framework/slsa-github-generator/releases.atom" htmlUrl="https://github.com/slsa-framework/slsa-github-generator/releases"/>
+    </outline>
+
+    <outline text="07. Threat Research" title="07. Threat Research">
+      <outline type="rss" text="Datadog Security Labs" xmlUrl="https://securitylabs.datadoghq.com/rss/feed.xml" htmlUrl="https://securitylabs.datadoghq.com/"/>
+      <outline type="rss" text="Wiz Blog" xmlUrl="https://www.wiz.io/feed/rss.xml" htmlUrl="https://www.wiz.io/blog/"/>
+    </outline>
+
+    <outline text="08. Offensive &amp; Red-Team" title="08. Offensive &amp; Red-Team">
+      <outline type="rss" text="SpecterOps" xmlUrl="https://specterops.io/blog/feed/" htmlUrl="https://specterops.io/blog/"/>
+      <outline type="rss" text="0xdf hacks stuff" xmlUrl="https://0xdf.gitlab.io/feed.xml" htmlUrl="https://0xdf.gitlab.io/"/>
+      <outline type="rss" text="Riccardo Ancarani" xmlUrl="https://riccardoancarani.github.io/feed.xml" htmlUrl="https://riccardoancarani.github.io/"/>
+    </outline>
+
+    <outline text="09. Advisory &amp; Regulatory" title="09. Advisory &amp; Regulatory">
+      <outline type="rss" text="CERT-EU Security Advisories" xmlUrl="https://cert.europa.eu/publications/security-advisories-rss" htmlUrl="https://cert.europa.eu/publications/security-advisories"/>
+      <outline type="rss" text="CVEReports" xmlUrl="https://cvereports.com/feed.xml" htmlUrl="https://cvereports.com/"/>
+      <outline type="rss" text="OpenSSF CRA Tag" xmlUrl="https://openssf.org/tag/cra/feed/" htmlUrl="https://openssf.org/tag/cra/"/>
+    </outline>
+
+    <outline text="10. Specific People" title="10. Specific People">
+      <outline type="rss" text="Adrian Mouat" xmlUrl="https://adrianmouat.com/index.xml" htmlUrl="https://adrianmouat.com/"/>
+      <outline type="atom" text="Bruce Schneier" xmlUrl="https://www.schneier.com/feed/atom/" htmlUrl="https://www.schneier.com/blog/"/>
+      <outline type="rss" text="Daniel Miessler" xmlUrl="https://danielmiessler.com/feed/" htmlUrl="https://danielmiessler.com/blog/"/>
+    </outline>
+  </body>
+</opml>
