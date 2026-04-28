@@ -50,14 +50,19 @@ descheduler:
       - name: default
         pluginConfig:
           # Eviction safety guards — see docs/descheduler.md §3.
-          # Without these, descheduler will happily evict PVC-anchored pods
-          # like registry-mirror, gitea, monitoring, valkey-cluster, rss-db.
+          # nodeFit: true is the load-bearing protection here — descheduler
+          # only evicts a pod if it can verify another node can take it.
+          # For local-path-backed PVCs (registry-mirror, gitea, monitoring,
+          # valkey-cluster, rss-db) the volume is anchored to one node, so
+          # no other node "fits" → eviction is automatically skipped.
+          # We deliberately do NOT set ignorePvcPods: true — that would
+          # require granting list/watch on PVCs cluster-wide, which the
+          # chart's default RBAC does not provide.
           - name: DefaultEvictor
             args:
               evictLocalStoragePods: false
               evictDaemonSetPods: false
               evictSystemCriticalPods: false
-              ignorePvcPods: true
               nodeFit: true
           - name: RemovePodsViolatingNodeAffinity
             args:

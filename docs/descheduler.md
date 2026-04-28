@@ -54,11 +54,17 @@ We tighten the evictor:
 
 | Field                       | Our value | Effect                                                                                  |
 |-----------------------------|-----------|-----------------------------------------------------------------------------------------|
+| `nodeFit`                   | `true`    | **Load-bearing safety.** Verifies a *different* node can actually take the pod before evicting. For local-path-backed PVCs (RWO, node-anchored), no other node has the volume → no other node "fits" → eviction is skipped automatically. |
 | `evictLocalStoragePods`     | `false`   | Skip pods with `emptyDir` / hostPath / local-path-anchored volumes.                      |
-| `ignorePvcPods`             | `true`    | Skip any pod that mounts a PVC.                                                          |
 | `evictDaemonSetPods`        | `false`   | DaemonSets are pinned by definition; eviction is meaningless.                            |
 | `evictSystemCriticalPods`   | `false`   | Don't touch kube-system / Argo / cert-manager system-critical pods.                      |
-| `nodeFit`                   | `true`    | Verify a *different* node can take the pod before evicting. Avoids evict-and-Pending.   |
+
+We deliberately do **not** set `ignorePvcPods: true`. That filter requires
+`list`/`watch` on PVCs cluster-wide, which the chart's default ClusterRole
+does not grant — enabling it caused descheduler to spam `persistentvolumeclaims is forbidden`
+errors on every reconcile. `nodeFit: true` covers the same ground without
+the extra permission, since on this cluster every PVC is local-path
+(RWO, node-pinned) and therefore can't fit anywhere except its origin node.
 
 ## 4. Cadence
 
