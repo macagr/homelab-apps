@@ -4,14 +4,17 @@
 # the upstream values live under that dependency name.
 
 gatekeeper:
-  # ── Replicas (controller-manager only; audit is always 1) ───────────────
+  # Replicas (controller-manager only; audit is always 1) 
   replicas: 2
 
-  # ── Controller-manager (admission webhook) ──────────────────────────────
+  # Controller-manager (admission webhook) 
   # Placement follows the documented HA-across-Tailscale scheme used by
   # cert-manager and external-secrets: two replicas spread across pi-03
   # (steady-state, home LAN) and node-4 (cloud, Tailscale fallback).
   controllerManager:
+    # nodeAffinity: required keeps the eligible set to pi-03 (workload=apps)
+    # and node-4 (node-location=cloud); preferred steers steady-state
+    # placement to pi-03 for low-latency apiserver access.
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -25,14 +28,18 @@ gatekeeper:
             preference:
               matchExpressions:
                 - { key: workload, operator: In, values: [apps] }
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  control-plane: controller-manager
-              topologyKey: kubernetes.io/hostname
+    # Hostname spread enforced via topologySpreadConstraints rather than
+    # soft podAntiAffinity — the latter tie-scores on a 2-node eligible set
+    # and collapses both replicas onto whichever node won the previous
+    # scheduling round. ScheduleAnyway preserves the documented fallback:
+    # when one node is down, both replicas collapse onto the survivor.
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            control-plane: controller-manager
     resources:
       requests:
         cpu: 50m
@@ -51,7 +58,7 @@ gatekeeper:
       - external-dns
       - registry-mirror
 
-  # ── Audit (periodic cluster crawl) ──────────────────────────────────────
+  # ── Audit (periodic cluster crawl) 
   # Single replica on node-4: only SSD-backed node, plenty of RAM headroom,
   # ~50 ms Tailscale latency on a 5-minute loop is trivial.
   audit:
@@ -64,21 +71,21 @@ gatekeeper:
       limits:
         memory: 512Mi
 
-  # ── Tuning ──────────────────────────────────────────────────────────────
+  # Tuning 
   auditInterval: 300              # 5 min (default 60); cuts kine write churn
   auditChunkSize: 500
   constraintViolationsLimit: 50
 
-  # ── Failure mode ────────────────────────────────────────────────────────
+  # Failure mode
   # failOpen during ramp. Revisit once a baseline policy set is stable.
   validatingWebhookFailurePolicy: Ignore
 
-  # ── Validation only — no mutation ───────────────────────────────────────
+  # Validation only — no mutation 
   disableMutation: true
 
-  # ── Logging ─────────────────────────────────────────────────────────────
+  # Logging 
   logLevel: WARN
   logDenies: true                 # surface policy denials even at WARN level
 
-  # ── Disabled features (re-enable when there's a concrete need) ──────────
+  # Disabled features (re-enable when there's a concrete need)
   enableExternalData: false
