@@ -68,13 +68,32 @@ the extra permission, since on this cluster every PVC is local-path
 
 ## 4. Cadence
 
-CronJob mode, every 15 minutes (`*/15 * * * *`). Default is every 2 minutes,
-which is overkill for a homelab. 15 minutes converges quickly enough for
-node flaps without putting steady churn on the apiserver.
+CronJob mode, once daily at 04:00 UTC (`0 4 * * *`). Default is every 2
+minutes, which is wildly overkill for a homelab. Trade-off: after a node
+flap the cluster may run with collapsed replicas for up to 24 h before
+descheduler rebalances — but the surviving replica still serves admission
+calls in the meantime, and pi-03 outages here are infrequent.
+
+If pi-03 ever starts flapping multiple times per week, drop to
+`0 */6 * * *` (every 6 hours) as a middle ground. We deliberately avoid
+the every-2-min default — it puts steady churn on the apiserver and on the
+control plane's HDD-backed kine without buying anything in a homelab.
 
 We don't use Deployment mode (continuous, with `deschedulingInterval`).
 CronJob is simpler, leaves no idle controller pod between runs, and fits
 the "infrequent batch action" shape of the work.
+
+### Job lifecycle settings
+
+To prevent failed-pod buildup (we hit this on the chart-0.35.0 RBAC issue —
+seven Error pods from one retrying Job stuck around for hours), the chart
+values set:
+
+| Field                          | Value | Effect                                                                  |
+|--------------------------------|-------|-------------------------------------------------------------------------|
+| `successfulJobsHistoryLimit`   | `1`   | Keep only the most recent successful Job (and its pod).                 |
+| `failedJobsHistoryLimit`       | `1`   | Keep only the most recent failed Job for debugging.                     |
+| `ttlSecondsAfterFinished`      | `3600`| Auto-delete each Job 1 hour after it terminates (success or failure).   |
 
 ## 5. Placement of descheduler itself
 

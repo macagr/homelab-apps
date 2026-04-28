@@ -4,12 +4,24 @@
 # the upstream values live under that dependency name.
 
 descheduler:
-  # Cadence 
-  # CronJob every 15 min instead of the default every-2-min. Converges
-  # quickly enough for node-flap recovery, no steady churn on the apiserver.
+  # Cadence
+  # Once daily at 04:00 UTC. Trade-off: after a node flap the cluster may
+  # run with collapsed replicas for up to 24 h before descheduler rebalances.
+  # For a homelab that's acceptable — pi-03 outages are infrequent and the
+  # surviving replica continues serving. If this turns out to be too slow in
+  # practice (e.g. pi-03 flaps multiple times a week), a sensible middle
+  # ground is "0 */6 * * *" (every 6 hours).
   kind: CronJob
-  schedule: "*/15 * * * *"
+  schedule: "0 4 * * *"
   replicas: 1
+
+  # Job lifecycle: keep one successful + one failed Job for debug, and
+  # auto-delete each Job 1 hour after it finishes so failed pods don't
+  # accumulate (we hit this with the v0.35.0 RBAC issue — 7 Error pods
+  # from a single retrying Job that stuck around).
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  ttlSecondsAfterFinished: 3600
 
   # Placement 
   # Pi-03 (workload=apps), with node-4 as fallback. Same eligible set used
