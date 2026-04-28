@@ -8,5 +8,11 @@ description: |
   See ../../docs/descheduler.md for the architectural decisions encoded here.
 dependencies:
   - name: descheduler
-    version: 0.35.0
+    # 0.35.1 is required (not 0.35.0) — earlier chart versions are missing
+    # the persistentvolumeclaims get/watch/list rule in the ClusterRole,
+    # which descheduler needs unconditionally for the nodeFit eviction
+    # check (verifying volume topology when deciding if a pod can be moved).
+    # Pinning below 0.35.1 produces "persistentvolumeclaims is forbidden"
+    # errors on every reconcile.
+    version: 0.35.1
     repository: https://kubernetes-sigs.github.io/descheduler/
