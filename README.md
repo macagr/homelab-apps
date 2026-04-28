@@ -126,4 +126,5 @@ the namespace, and the ESO SecretStore wiring.
 - [docs/secrets.md](docs/secrets.md) — how secrets are handled and why nothing real is committed
 - [docs/deployment.md](docs/deployment.md) — step-by-step deployment guide (manual + future GitOps)
 - [docs/gatekeeper.md](docs/gatekeeper.md) — admission policy: architecture, placement, policy lifecycle (`dryrun` → `deny`), `gator` in CI
+- [docs/descheduler.md](docs/descheduler.md) — pod rebalancing after node flaps: scope, eviction safety, why we override the chart default policy
 

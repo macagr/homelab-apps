@@ -1,0 +1,12 @@
+apiVersion: v2
+name: descheduler-stack
+version: 1.0.0
+description: |
+  Umbrella chart wrapping the upstream kubernetes-sigs/descheduler chart.
+  Pins the chart version and applies homelab-specific overrides (placement,
+  cadence, narrowed plugin set, conservative eviction safety) via values.yaml.
+  See ../../docs/descheduler.md for the architectural decisions encoded here.
+dependencies:
+  - name: descheduler
+    version: 0.35.0
+    repository: https://kubernetes-sigs.github.io/descheduler/

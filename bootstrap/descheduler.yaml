@@ -1,0 +1,35 @@
+# Child Application: descheduler
+#
+# Periodically rebalances pods that violate placement constraints
+# (TopologySpreadConstraints, podAntiAffinity, nodeAffinity, duplicate
+# replicas). The long-term fix for soft-affinity collapse after node flaps.
+# See apps/../docs/descheduler.md for the full design.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: descheduler
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://git.mcagr.com/macagr/homelab-apps.git
+    targetRevision: main
+    path: apps/descheduler
+    helm:
+      releaseName: descheduler
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: descheduler
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

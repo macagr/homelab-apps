@@ -1,0 +1,89 @@
+# Descheduler Helm chart overrides.
+# Decisions documented in docs/descheduler.md.
+# All keys nested under `descheduler:` because this is an umbrella chart and
+# the upstream values live under that dependency name.
+
+descheduler:
+  # Cadence 
+  # CronJob every 15 min instead of the default every-2-min. Converges
+  # quickly enough for node-flap recovery, no steady churn on the apiserver.
+  kind: CronJob
+  schedule: "*/15 * * * *"
+  replicas: 1
+
+  # Placement 
+  # Pi-03 (workload=apps), with node-4 as fallback. Same eligible set used
+  # by every other API-heavy controller in the cluster.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - { key: workload, operator: In, values: [apps] }
+          - matchExpressions:
+              - { key: node-location, operator: In, values: [cloud] }
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - { key: workload, operator: In, values: [apps] }
+
+  # Resource budget 
+  # Tightened from chart defaults (500m/256Mi). Descheduler is bursty —
+  # most of its 15 min cycle is idle.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+  # Policy 
+  # Replaces the chart default policy entirely. Enables only what's relevant
+  # to the placement-drift problem; explicitly omits LowNodeUtilization,
+  # HighNodeUtilization, RemovePodsHavingTooManyRestarts, and
+  # RemovePodsViolatingNodeTaints. See docs/descheduler.md §1–2.
+  deschedulerPolicyAPIVersion: descheduler/v1alpha2
+  deschedulerPolicy:
+    profiles:
+      - name: default
+        pluginConfig:
+          # Eviction safety guards — see docs/descheduler.md §3.
+          # Without these, descheduler will happily evict PVC-anchored pods
+          # like registry-mirror, gitea, monitoring, valkey-cluster, rss-db.
+          - name: DefaultEvictor
+            args:
+              evictLocalStoragePods: false
+              evictDaemonSetPods: false
+              evictSystemCriticalPods: false
+              ignorePvcPods: true
+              nodeFit: true
+          - name: RemovePodsViolatingNodeAffinity
+            args:
+              nodeAffinityType:
+                - requiredDuringSchedulingIgnoredDuringExecution
+          - name: RemoveDuplicates
+          - name: RemovePodsViolatingInterPodAntiAffinity
+          - name: RemovePodsViolatingTopologySpreadConstraint
+        plugins:
+          balance:
+            enabled:
+              - RemoveDuplicates
+              - RemovePodsViolatingTopologySpreadConstraint
+          deschedule:
+            enabled:
+              - RemovePodsViolatingInterPodAntiAffinity
+              - RemovePodsViolatingNodeAffinity
+
+  # Logging 
+  # v=3 (chart default) is verbose for the every-15-min cycle. Bump down.
+  cmdOptions:
+    v: 2
+
+  # Misc 
+  priorityClassName: system-cluster-critical
+  serviceAccount:
+    create: true
+  rbac:
+    create: true
